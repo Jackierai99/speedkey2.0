@@ -16,13 +16,18 @@ jobs:
           distribution: temurin
           java-version: 17
 
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: 8.7
+
       - name: Unzip project
         run: unzip -q project.zip -d extracted
 
       - name: Find project folder
         run: |
-          GRADLEW=$(find extracted -name gradlew | head -n 1)
-          echo "PROJECT_DIR=$(dirname "$GRADLEW")" >> $GITHUB_ENV
+          S=$(find extracted \( -name settings.gradle -o -name settings.gradle.kts \) | head -n 1)
+          echo "Found: $S"
+          echo "PROJECT_DIR=$(dirname "$S")" >> $GITHUB_ENV
 
       - name: Accept SDK licenses
         run: yes | sdkmanager --licenses || true
@@ -30,8 +35,8 @@ jobs:
       - name: Build debug APK
         run: |
           cd "$PROJECT_DIR"
-          chmod +x gradlew
-          ./gradlew assembleDebug
+          ls
+          if [ -f gradlew ]; then chmod +x gradlew; ./gradlew assembleDebug; else gradle assembleDebug; fi
 
       - uses: actions/upload-artifact@v4
         with:
